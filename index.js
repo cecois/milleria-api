@@ -6,15 +6,26 @@ var EXPRESS = require('express')
 ,__ = require('underscore')
 ,APP = EXPRESS();
 
-APP.get('/geoms',(req,res)=>{
+APP.get('/geoms/:q?',(req,res)=>{
 
+console.log(req);
+if(typeof req.params.q == 'undefined' || req.params.q.indexOf(":")<0){
+	var o = {success:false,msg:"missing or invalid q param"}
+	res.send(JSON.stringify(o))
+} else {
+	var clauses = __.map(req.params.q.split(","),(p)=>{
 
-	return new Promise((resolve,rejectd)=>{
+var pa = p.split(":");
 
-		var data = req.params
-		resolve(data);
+return '{ $and: [ { "geometry.type": '+pa[0]+' }, { "properties.cartodb_id": '+pa[1]+' } ] }'
 
-})//promise
+	});//map
+
+// { $or: [ { <expression1> }, { <expression2> }, ... , { <expressionN> } ] }
+// { $and: [ { price: { $ne: 1.99 } }, { price: { $exists: true } } ] }
+var query = {$or:[clauses.join(",")]}
+
+res.send(JSON.stringify(query))}
 
 }) //APP.get
 
