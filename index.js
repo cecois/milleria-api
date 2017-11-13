@@ -8,7 +8,7 @@ var EXPRESS = require('express')
 ,APP = EXPRESS();
 
 APP.get('/geoms/:app/:q?',(req,res)=>{
-
+res.setHeader('Content-Type', 'application/json');
 	if(typeof req.params.q == 'undefined' || req.params.q.indexOf(":")<0){
 		var o = {success:false,msg:"missing or invalid q param"}
 		res.send(JSON.stringify(o))
@@ -16,10 +16,10 @@ APP.get('/geoms/:app/:q?',(req,res)=>{
 
 		if(req.params.app == 'cbb'){
 			var clauses = __.map(req.params.q.split(","),(p)=>{
-				
+
 				var pa = p.split(":")
 				,pat = '';
-				
+
 				switch (pa[0]) {
 					case 'point':
 					pat='Point'
@@ -34,31 +34,30 @@ APP.get('/geoms/:app/:q?',(req,res)=>{
 							// statements_def
 							break;
 						}
-						
+
 						var qt = { "geometry.type": {"$regex":".*"+pat+".*"} }
 						var qv = { "properties.cartodb_id": parseInt(pa[1]) }
-						
 						return { $and: [ qt, qv ] }
-						
+
 			});//map
-			
-			var query = {$or:[clauses[0],clauses[1]]}
-			
+
+			var query = {$or:clauses}
+
 		// Connection URL
 		// var url = 'mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?authSource=admin&replicaSet=CL00-shard-0&ssl=true';
 		var url = (Config.mode=='T')?'mongodb://localhost:27017/cbb':'mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?authSource=admin&replicaSet=CL00-shard-0&ssl=true';
 		// Use connect method to connect to the Server
 		MONGO.connect(url,(err, db)=>{
 			console.log("Connected correctly to server");
-			
+
 			var col = db.collection('geo');
-			
+
 			col.find(query).limit(999999).toArray((err, docs)=>{
 				if(err){res.send(JSON.stringify(err));}else{
 					res.send(JSON.stringify(docs));
 					db.close();}
 		    });//.find.toarray
-			
+
 		});//.connect
 	}//test of app==cbb (no others for now but later maybe)
 
