@@ -7,15 +7,17 @@ var EXPRESS = require('express')
 ,__ = require('underscore')
 ,APP = EXPRESS();
 
-APP.get('/geoms/:app/:q?',(req,res)=>{
-res.setHeader('Content-Type', 'application/json');
-	if(typeof req.params.q == 'undefined' || req.params.q.indexOf(":")<0){
+APP.get('/geoms/:app',(req,res)=>{
+	console.log('req');
+	console.log(req);
+	res.setHeader('Content-Type', 'application/json');
+	if(typeof req.query.q == 'undefined' || req.query.q.indexOf(":")<0){
 		var o = {success:false,msg:"missing or invalid q param"}
 		res.send(JSON.stringify(o))
 	} else {
 
 		if(req.params.app == 'cbb'){
-			var clauses = __.map(req.params.q.split(","),(p)=>{
+			var clauses = __.map(req.query.q.split(","),(p)=>{
 
 				var pa = p.split(":")
 				,pat = '';
@@ -54,7 +56,8 @@ res.setHeader('Content-Type', 'application/json');
 
 			col.find(query).limit(999999).toArray((err, docs)=>{
 				if(err){res.send(JSON.stringify(err));}else{
-					res.send(JSON.stringify(docs));
+					// res.send(JSON.stringify(docs));
+					res.jsonp(docs);
 					db.close();}
 		    });//.find.toarray
 
