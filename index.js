@@ -5,7 +5,59 @@ var EXPRESS = require('express')
 ,ASYNC = require('async')
 ,MONGO = require('mongodb').MongoClient
 ,__ = require('underscore')
+,FS = require('fs')
 ,APP = EXPRESS();
+
+APP.get('/geocode/:loc',(req,res)=>{
+
+	res.setHeader('Content-Type', 'application/json');
+	var Q = {incoming:req.params.loc}
+	var R = {
+		Q:Q.incoming.replace(",","")
+		,QR:Q.incoming
+	} //~empty response obj
+
+	// QUITE a sketchy way to test for an address v. placename string
+	R.type=(isNaN(Q.incoming[0])==false)?'address':'other';
+
+	var options = (R.type=='address')?
+	{ method: 'GET',
+	url: 'http://nominatim.openstreetmap.org/search',
+	qs:
+	{ q: R.Q,
+		format: 'json',
+		addressdetails: '1' },
+		headers: { 'cache-control': 'no-cache' } }
+		:
+		{ method: 'GET',
+		url: 'http://nominatim.openstreetmap.org/search.php',
+		qs: { limit: '10', format: 'jsonv2', dedupe: '1', q: R.Q },
+		headers: { 'cache-control': 'no-cache' } };
+
+
+		REQUEST(options, (error, resp, body)=>{
+			console.log("in request")
+			console.log("resp",resp)
+			if (error) {
+				throw new Error(error);
+				console.log(error)
+				R.success='false';
+				R.error=error;
+				res.jsonp(R);
+			}//if.error
+			else {
+				var B = JSON.parse(body)
+				R.body= B
+				R.nomin = {bbox:B.boundingbox,osm_type:B.osm_type}
+				R.geom_type="point|poly|line"
+			// console.log(body);
+			res.jsonp(R);
+		} //if.error.else
+	});
+
+
+
+})//.get/geocode
 
 APP.get('/geoms/:app',(req,res)=>{
 	console.log('req');
@@ -15,6 +67,16 @@ APP.get('/geoms/:app',(req,res)=>{
 		var o = {success:false,msg:"missing or invalid q param"}
 		res.send(JSON.stringify(o))
 	} else {
+
+		if(req.params.app == 'offline'){
+			FS.readFile('./offline/geojson.geojson',(e,d)=>{
+
+				if(e) throw Error(e);
+				var J = JSON.parse(d);
+				console.log(J)
+				res.jsonp(J.features);
+			})
+		}//if.offlien
 
 		if(req.params.app == 'cbb'){
 			var clauses = __.map(req.query.q.split(","),(p)=>{
@@ -70,5 +132,5 @@ APP.get('/geoms/:app',(req,res)=>{
 
 
 APP.listen(Config.port)
-console.log('running at http://localhost:'+Config.port+'/geoms');
+console.log('running at http://localhost:'+Config.port);
 exports = module.exports = APP;
