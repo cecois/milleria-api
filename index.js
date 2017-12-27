@@ -1,4 +1,4 @@
-const Config = require("./Config.json")
+const CONFIG = require("./Config.json")
 
 var EXPRESS = require('express')
 ,REQUEST = require('request')
@@ -6,7 +6,23 @@ var EXPRESS = require('express')
 ,MONGO = require('mongodb').MongoClient
 ,__ = require('underscore')
 ,FS = require('fs')
-,APP = EXPRESS();
+,APP = EXPRESS()
+;
+
+// APP.get('/cage-fake',(req,res)=>{
+// 	FS.readFile('./offline/cage-fake.json',(E,D)=>{
+// 		if(E) throw Error(E);
+// 		res.send(JSON.parse(D))
+// 	})
+// })
+
+APP.get('/fake/:which',(req,res)=>{
+	var F = (req.params.which=='cage')?'./offline/cage-fake.json':'./offline/geojson.geojson'
+	FS.readFile(F,(E,D)=>{
+		if(E) throw Error(E);
+		res.send(JSON.parse(D))
+	})
+})
 
 APP.get('/geocode/:loc',(req,res)=>{
 
@@ -22,22 +38,25 @@ APP.get('/geocode/:loc',(req,res)=>{
 
 	var options = (R.type=='address')?
 	{ method: 'GET',
-	url: 'http://nominatim.openstreetmap.org/search',
+	url: (CONFIG.mode=='T')?'http://localhost:4040/fake/cage':"https://api.opencagedata.com/geocode/v1/json'",
 	qs:
 	{ q: R.Q,
-		format: 'json',
-		addressdetails: '1' },
+		key:CONFIG.cage_key,
+		pretty: 0,
+		no_annotations: 1},
 		headers: { 'cache-control': 'no-cache' } }
 		:
 		{ method: 'GET',
-		url: 'http://nominatim.openstreetmap.org/search.php',
-		qs: { limit: '10', format: 'jsonv2', dedupe: '1', q: R.Q },
+		url: (CONFIG.mode=='T')?'http://localhost:4040/fake/nominatim':'http://nominatim.openstreetmap.org/search.php',
+		qs: { limit: '10',
+		format: 'jsonv2',
+		polygon_geojson:1,
+		dedupe: '1', q: R.Q },
 		headers: { 'cache-control': 'no-cache' } };
 
 
 		REQUEST(options, (error, resp, body)=>{
-			console.log("in request")
-			console.log("resp",resp)
+
 			if (error) {
 				throw new Error(error);
 				console.log(error)
@@ -46,12 +65,11 @@ APP.get('/geocode/:loc',(req,res)=>{
 				res.jsonp(R);
 			}//if.error
 			else {
-				var B = JSON.parse(body)
-				R.body= B
-				R.nomin = {bbox:B.boundingbox,osm_type:B.osm_type}
-				R.geom_type="point|poly|line"
-			// console.log(body);
-			res.jsonp(R);
+				R = JSON.parse(body)
+				// R.body= __.reject(B,(b)=>{return b.geojson.type=="LineString"});
+				// R.nomin = {bbox:B.boundingbox,osm_type:B.osm_type}
+				// R.geom_type="point|poly|line"
+				res.jsonp(R);
 		} //if.error.else
 	});
 
@@ -109,7 +127,7 @@ APP.get('/geoms/:app',(req,res)=>{
 
 		// Connection URL
 		// var url = 'mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?authSource=admin&replicaSet=CL00-shard-0&ssl=true';
-		var url = (Config.mode=='T')?'mongodb://localhost:27017/cbb':'mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?authSource=admin&replicaSet=CL00-shard-0&ssl=true';
+		var url = (CONFIG.mode=='T')?'mongodb://localhost:27017/cbb':'mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?authSource=admin&replicaSet=CL00-shard-0&ssl=true';
 		// Use connect method to connect to the Server
 		MONGO.connect(url,(err, db)=>{
 			console.log("Connected correctly to server");
@@ -131,6 +149,6 @@ APP.get('/geoms/:app',(req,res)=>{
 }) //APP.get
 
 
-APP.listen(Config.port)
-console.log('running at http://localhost:'+Config.port);
+APP.listen(CONFIG.port)
+console.log('running at http://localhost:'+CONFIG.port);
 exports = module.exports = APP;
