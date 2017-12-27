@@ -143,6 +143,27 @@ APP.get('/geoms/:app',(req,res)=>{
 
 		});//.connect
 	}//test of app==cbb (no others for now but later maybe)
+	else if(req.params.app == 'garbage'){
+
+		// Connection URL
+		// var url = 'mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?authSource=admin&replicaSet=CL00-shard-0&ssl=true';
+		var url = (Config.mode=='T')?'mongodb://localhost:27017/garbage':'mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/garbage?authSource=admin&replicaSet=CL00-shard-0&ssl=true';
+		// Use connect method to connect to the Server
+		MONGO.connect(url,(err, db)=>{
+			console.log("Connected correctly to server");
+
+			var col = db.collection('guesses');
+
+			col.find("*:*").limit(999999).toArray((err, docs)=>{
+				if(err){res.send(JSON.stringify(err));}else{
+					// res.send(JSON.stringify(docs));
+					res.jsonp(docs);
+					db.close();}
+		    });//.find.toarray
+
+		});//.connect
+
+	}//if.garbage
 
 
 }//else of params test
