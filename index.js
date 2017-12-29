@@ -63,7 +63,7 @@ APP.get('/geoms/:app',(req,res)=>{
 	console.log('req');
 	console.log(req);
 	res.setHeader('Content-Type', 'application/json');
-	if(typeof req.query.q == 'undefined' || req.query.q.indexOf(":")<0){
+	if(req.params.app=='cbb' && (typeof req.query.q == 'undefined' || req.query.q.indexOf(":")<0)){
 		var o = {success:false,msg:"missing or invalid q param"}
 		res.send(JSON.stringify(o))
 	} else {
@@ -136,10 +136,10 @@ APP.get('/geoms/:app',(req,res)=>{
 
 			var col = db.collection('guesses');
 
-			col.find("*:*").limit(999999).toArray((err, docs)=>{
+			col.find().limit(999999).toArray((err, docs)=>{
 				if(err){res.send(JSON.stringify(err));}else{
-					// res.send(JSON.stringify(docs));
-					res.jsonp(docs);
+
+					res.jsonp({"type": "FeatureCollection","features":docs});
 					db.close();}
 		    });//.find.toarray
 
