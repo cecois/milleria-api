@@ -6,20 +6,34 @@ const EXPRESS = require('express')
 ,MONGO = require('mongodb').MongoClient
 ,__ = require('underscore')
 ,FS = require('fs')
+,CORS = require('cors')
 ,APP = EXPRESS()
 ,MOMENT = require('moment')
 ,BODYPARSER = require('body-parser')
+,NOGO = require('node-geocoder')
 ;
 
+APP.use(CORS());
 APP.use(BODYPARSER({limit: '50000mb',extended:true,parameterLimit: 1000000000}));
 APP.use(BODYPARSER.json({limit: '50000mb',extended:true,parameterLimit: 1000000000})); // support json encoded bodies
 APP.use(BODYPARSER.urlencoded({ limit: '50000mb',extended: true,parameterLimit: 1000000000})); // support encoded bodies
-// APP.use(BODYPARSER());
+
+const options = {
+  provider: 'datasciencetoolkit',
+  // Optional depending on the providers
+  httpAdapter: 'http',
+  formatter: null,         // 'gpx', 'string', ...
+  "user-agent":'Milleria-API',
+  format:'json'
+};
+
+const GEOC = NOGO(options);
 
 var _getmax = async (t)=>{
 return new Promise(function(resolve, reject){
 
-const url = "mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?ssl=true&replicaSet=CL00-shard-0&authSource=admin";
+// const url = "mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?ssl=true&replicaSet=CL00-shard-0&authSource=admin";
+const url = "mongodb://cecois:r0mjwrD61vaRhWKn@cbbcluster0-shard-00-00-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-01-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-02-wdqp7.gcp.mongodb.net:27017/test?ssl=true&replicaSet=cbbcluster0-shard-0&authSource=admin&retryWrites=true";
 
 var Q = {"*":"*"}
 				switch (t.toLowerCase()) {
@@ -70,7 +84,8 @@ var _send = async (D)=>{
 return new Promise(function(resolve, reject){
 
 
-const url = "mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?ssl=true&replicaSet=CL00-shard-0&authSource=admin";
+// const url = "mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?ssl=true&replicaSet=CL00-shard-0&authSource=admin";
+const url = "mongodb://cecois:r0mjwrD61vaRhWKn@cbbcluster0-shard-00-00-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-01-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-02-wdqp7.gcp.mongodb.net:27017/test?ssl=true&replicaSet=cbbcluster0-shard-0&authSource=admin&retryWrites=true";
 
 
 
@@ -94,7 +109,8 @@ var _send_garbage = async (D)=>{
 return new Promise(function(resolve, reject){
 
 
-const url = "mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/garbage?ssl=true&replicaSet=CL00-shard-0&authSource=admin";
+// const url = "mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/garbage?ssl=true&replicaSet=CL00-shard-0&authSource=admin";
+const url = "mongodb://cecois:r0mjwrD61vaRhWKn@cbbcluster0-shard-00-00-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-01-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-02-wdqp7.gcp.mongodb.net:27017/test?ssl=true&replicaSet=cbbcluster0-shard-0&authSource=admin&retryWrites=true";
 
 
 
@@ -108,6 +124,26 @@ const url = "mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017
 			});
 
 		});
+
+}//promise
+)
+}//send
+
+const _dst2geojson = async (D)=>{
+
+return new Promise(function(resolve, reject){
+
+	// {"_id":"5a073902126838b176f81557","type":"Feature","geometry":{"type":"Point","coordinates":[-82.461319,27.946493]},"properties":{"name":"Tampa, FL","anno":"all kinds of tips from Diner Marshal Central;hometown of: Sprague the Whisperer","confidence":"medium","cartodb_id":201,"created_at":"2015-02-26T12:48:58Z","updated_at":"2015-02-26T12:50:02Z","scnotes":"no poly from Nominatim"}}
+
+const GJ = __.map(D,(d)=>{
+
+console.log("d",d);
+
+let o = {"type":"Feature","geometry":{"type":"Point","coordinates":[d.value.longitude,27.946493]},"properties":{"name":"Tampa, FL","anno":"all kinds of tips from Diner Marshal Central;hometown of: Sprague the Whisperer","confidence":"medium","cartodb_id":201,"created_at":"2015-02-26T12:48:58Z","updated_at":"2015-02-26T12:50:02Z","scnotes":"no poly from Nominatim"}}
+return o;
+})
+
+resolve(GJ);
 
 }//promise
 )
@@ -140,15 +176,47 @@ res.send(max)
 
 })
 
+APP.post('/geocode/batch',async (req, res)=>{
+res.header("Access-Control-Allow-Origin", "*");
+
+console.log("plucking addresses...")
+const obj = [
+{address:"216 e. 2nd st, tipton, ia",plant:'216plant',age:10,aid:"216e2ndsttiptoniaunitedstates"},{address:"1306 larry lane, laredo, tx",plant:'larryplant',age:222,aid:"1306larrylanelaredotxunitedstates"}
+]
+    // var addresses = req.body;
+    var addresses = __.pluck(obj,'address');
+
+
+console.log("sending to geocoder...")
+GEOC.batchGeocode(addresses)
+  .then(function(resp) {
+    
+console.log("reassociating...")
+let reassociated = __.map(resp,(d)=>{
+    const j = d.value[0];
+    // console.log("j",j)
+    let cid = (j.streetNumber.trim()+j.streetName.trim()+j.city.trim()+j.state.trim()+'unitedstates').toLowerCase().replace(/\s/g, "")
+    let aged = __.findWhere(obj,{aid:cid})
+    let age = (typeof aged !== 'undefined')?aged.age:'unfound';
+    let o = {"type":"Feature","geometry":{"type":"Point","coordinates":[j.longitude,j.latitude]},"properties":{"age":age,"id":cid,"name":j.streetNumber+' '+j.streetName+', '+j.city+', '+j.state+' '+j.country,"anno":'geocoding by '+j.provider}}
+    return o;
+    })
+let orsp= {"type": "FeatureCollection", "features":reassociated}
+console.log("returning orsp:",orsp)
+    res.json(JSON.stringify(orsp))//send
+  })
+  .catch(function(err) {
+    res.send(err)
+  });
+
+});//.post
+
 APP.post('/geocode/submit/cbb',async (req, res)=>{
     
 	res.header("Access-Control-Allow-Origin", "*");
     var doc = req.body;
 
-
 var count = (doc.properties.name.match(/,/g) || []).length;
-
-
 
     if(doc.properties.anno==null){
     	res.send("empty anno")
@@ -157,16 +225,14 @@ var count = (doc.properties.name.match(/,/g) || []).length;
 res.send("probably default properties.name value (2+ commas)")
     } else {
 	
-    
     	console.log("getting max id with doc.geometry.type",doc.geometry.type);
     doc.properties.cartodb_id=await _getmax(doc.geometry.type);
 
 console.log("resulting doc w/ new max id:",doc);
 
-    const url = "mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?ssl=true&replicaSet=CL00-shard-0&authSource=admin";
+    const url = "mongodb://cecois:r0mjwrD61vaRhWKn@cbbcluster0-shard-00-00-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-01-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-02-wdqp7.gcp.mongodb.net:27017/test?ssl=true&replicaSet=cbbcluster0-shard-0&authSource=admin&retryWrites=true";
 
     var insrt = await _send(doc);
-    // var insrt = null;
 
     res.send({response:insrt});
 
@@ -187,7 +253,8 @@ APP.get('/geocode/:loc',(req,res)=>{
 	res.setHeader('Content-Type', 'application/json');
 	// allow cors
 	res.header("Access-Control-Allow-Origin", "*");
-	var Q = {incoming:req.params.loc}
+	var Q = {"incoming":req.params.loc}
+	console.log("Q:",Q)
 	var R = {
 		// Q:Q.incoming.replace(",","")
 		Q:Q.incoming
@@ -272,13 +339,13 @@ o.properties={
 }
 else if(typ=="file"){
 console.log("type is fil")
-var qobj = JSON.parse(decodeURI(Q.incoming))
+
 	var o = {}
 
 o.type="Feature"
 o.geometry="well get this frm local file",
 o.properties={
-	name:qobj.feature
+	name:Q.incoming
 	,anno:null
 	,confidence:null
 	,scnotes:"local file via milleria geocoder"
@@ -297,10 +364,12 @@ if(err){
 var jdata = JSON.parse(data);
 
 
-var feature = __.find(jdata.features, (F)=>{ 
-	console.log("F",F.properties.PROV_NAME);
-	return F.properties.PROV_NAME==qobj.feature; 
-});
+// var feature = __.find(jdata.features, (F)=>{ 
+// 	console.log("F",F.properties.PROV_NAME);
+// 	return F.properties.PROV_NAME==qobj.feature; 
+// });
+
+let feature = jdata.features[0]
 
 
 	o.geometry=feature.geometry
@@ -439,7 +508,7 @@ APP.get('/geoms/:app',(req,res)=>{
 
 		// Connection URL
 		// var url = 'mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?authSource=admin&replicaSet=CL00-shard-0&ssl=true';
-		var url = (CONFIG.mode=='T')?'mongodb://localhost:27017/cbb':'mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?authSource=admin&replicaSet=CL00-shard-0&ssl=true';
+		var url = 'mongodb://cecois:r0mjwrD61vaRhWKn@cbbcluster0-shard-00-00-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-01-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-02-wdqp7.gcp.mongodb.net:27017/test?ssl=true&replicaSet=cbbcluster0-shard-0&authSource=admin&retryWrites=true';
 		// Use connect method to connect to the Server
 		MONGO.connect(url,(err, client)=>{
 
@@ -462,7 +531,7 @@ APP.get('/geoms/:app',(req,res)=>{
 
 		// Connection URL
 		// var url = 'mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?authSource=admin&replicaSet=CL00-shard-0&ssl=true';
-		var url = (CONFIG.mode=='T')?'mongodb://localhost:27017/garbage':'mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/garbage?authSource=admin&replicaSet=CL00-shard-0&ssl=true';
+		var url = 'mongodb://cecois:r0mjwrD61vaRhWKn@cbbcluster0-shard-00-00-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-01-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-02-wdqp7.gcp.mongodb.net:27017/test?ssl=true&replicaSet=cbbcluster0-shard-0&authSource=admin&retryWrites=true';
 		// Use connect method to connect to the Server
 		MONGO.connect(url,(err, client)=>{
 			console.log("Connected correctly to server");
@@ -484,6 +553,34 @@ const db = client.db('garbage');
 
 
 }//else of params test
+}) //APP.get
+
+APP.get('/missings/:which',(req,res)=>{
+	res.setHeader('Content-Type', 'application/json');
+	// allow cors
+	res.header("Access-Control-Allow-Origin", "*");
+	
+		// Use connect method to connect to the Server
+const uri = "mongodb://cecois:r0mjwrD61vaRhWKn@cbbcluster0-shard-00-00-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-01-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-02-wdqp7.gcp.mongodb.net:27017/test?ssl=true&replicaSet=cbbcluster0-shard-0&authSource=admin&retryWrites=true";
+const client = new MONGO(uri, { useNewUrlParser: true });
+client.connect(err => {
+	if(err)console.log(err);
+  const col = client.db("cbb").collection("missings");
+  // perform actions on the collection object
+  col.find({ 'fixed': { $ne: true } }).limit(999999).toArray((err, docs)=>{
+				if(err){
+					res.send(JSON.stringify(err));
+					  client.close();
+				}else{
+  client.close();
+res.jsonp(docs)
+					// res.jsonp(docs);
+					// db.close();
+
+				}
+		    });//.find.toarray
+});
+	
 }) //APP.get
 
 
