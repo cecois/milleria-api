@@ -3,6 +3,7 @@ const EXPRESS = require('express')
 	, REQUEST = require('request')
 	, ASYNC = require('async')
 	, MONGO = require('mongodb').MongoClient
+	,MONGO_OBJECTID = require('mongodb').ObjectId
 	, __ = require('underscore')
 	, FS = require('fs')
 	, CORS = require('cors')
@@ -137,20 +138,21 @@ var _send = async (D) => {
 		} //promise
 	)
 } //send
-var _update_missing = async (I) => {
-	console.log("updating missings w/ I:", I);
+var _update_missing = async (cid,ctyp) => {
+	console.log("updating missings pair:", cid+':'+ctyp);
 	return new Promise(function (resolve, reject) {
 			// const url = "mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?ssl=true&replicaSet=CL00-shard-0&authSource=admin";
 			const url = "mongodb://cecois:r0mjwrD61vaRhWKn@cbbcluster0-shard-00-00-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-01-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-02-wdqp7.gcp.mongodb.net:27017/test?ssl=true&replicaSet=cbbcluster0-shard-0&authSource=admin&retryWrites=true";
 			MONGO.connect(url, (err, client) => {
 				const db = client.db('cbb');
 				var col = db.collection('missings');
-				col.updateOne("_id": ObjectId(I), {
+				// let oid = new MONGO_OBJECTID(I)
+				col.updateOne({"carto.cartodb_id": cid,"carto.type":ctyp}, {
 					$set: {
-						fixed: true
+						"fixed": true
 					}
 				}).then((r) => {
-					db.close();
+					// db.close();
 					resolve(r);
 				});
 				// col.insertMany([D]).then((r) => {
@@ -205,8 +207,9 @@ const _dst2geojson = async (D) => {
 } //send
 APP.post('/geocode/fix/once', async (req, res) => {
 	var doc = req.body;
-	var I = doc.id;
-	var updt = await _update_missing(I);
+	// var I = doc.id;
+	var cid=doc.cid,ctyp=doc.ctyp;
+	var updt = await _update_missing(cid,ctyp);
 	res.header("Access-Control-Allow-Origin", "*");
 	res.send({
 		response: updt
