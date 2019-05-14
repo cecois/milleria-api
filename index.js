@@ -11,6 +11,7 @@ APP.get('/geoms/:app',(req,res)=>{
 	console.log('req');
 	console.log(req);
 	res.setHeader('Content-Type', 'application/json');
+res.header("Access-Control-Allow-Origin", "*");
 	if(typeof req.query.q == 'undefined' || req.query.q.indexOf(":")<0){
 		var o = {success:false,msg:"missing or invalid q param"}
 		res.send(JSON.stringify(o))
@@ -47,7 +48,8 @@ APP.get('/geoms/:app',(req,res)=>{
 
 		// Connection URL
 		// var url = 'mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?authSource=admin&replicaSet=CL00-shard-0&ssl=true';
-		var url = (Config.mode=='T')?'mongodb://localhost:27017/cbb':'mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?authSource=admin&replicaSet=CL00-shard-0&ssl=true';
+		//var url = (Config.mode=='T')?'mongodb://localhost:27017/cbb':'mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?authSource=admin&replicaSet=CL00-shard-0&ssl=true';
+		var url = (Config.mode=='T')?'mongodb://localhost:27017/cbb':'mongodb://cecois:r0mjwrD61vaRhWKn@cbbcluster0-shard-00-00-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-01-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-02-wdqp7.gcp.mongodb.net:27017/test?ssl=true&replicaSet=cbbcluster0-shard-0&authSource=admin&retryWrites=true';
 		// Use connect method to connect to the Server
 		MONGO.connect(url,(err, db)=>{
 			console.log("Connected correctly to server");
