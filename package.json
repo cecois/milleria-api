@@ -5,7 +5,7 @@
     "cors": "^2.8.5",
     "express": "^4.16.2",
     "moment": "^2.23.0",
-    "mongodb": "^3.0.1",
+    "mongodb": "^3.1.13",
     "node-geocoder": "^3.22.0",
     "request": "^2.83.0",
     "underscore": "^1.8.3",
