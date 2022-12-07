@@ -3,7 +3,7 @@
     "async": "^2.6.0",
     "body-parser": "^1.18.2",
     "cors": "^2.8.5",
-    "express": "^4.16.2",
+    "express": "^4.17.3",
     "moment": "^2.23.0",
     "mongodb": "^3.0.1",
     "node-geocoder": "^3.22.0",
